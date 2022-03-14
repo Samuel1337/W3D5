@@ -1,17 +1,15 @@
 require_relative "tree_node"
+require 'byebug'
 
 class KnightPathFinder
 
-    attr_reader :pos
-
     def initialize(pos)
-        @current_pos = pos
+        @start_pos = pos # [0,0]
         @root_node = PolyTreeNode.new(pos)
-        build_move_tree
         @considered_positions = [pos]
+        build_move_tree
+        
     end
-
-
                             
     def self.valid_moves(pos) 
         
@@ -38,36 +36,43 @@ class KnightPathFinder
         moves
     end
 
-    def [](pos)
-        x, y = pos
-        @pos[x][y]
-    end
-
     def build_move_tree
         queue = [@root_node]
-        tree = [@root_node]
-        cur_pos = @current_pos
-        until queue.empty?
-            current = queue.shift
-            nodes = new_move_positions(cur_pos).map do |move|
-                cur_pos = move
-                current.add_child(PolyTreeNode.new(move))
+        until queue.empty? 
+            current_node = queue.shift  
+            new_move_positions(current_node.value).each do |el|
+                new_node = PolyTreeNode.new(el)
+                current_node.add_child(new_node)
+                queue << new_node
             end
-            queue += nodes
-            tree += nodes
         end
-       
-        return tree
     end
 
-    def find_path
-
+    def find_path(end_pos)
+        result = @root_node.dfs(end_pos)
+        p trace_path_back(result)
     end
+
+    def trace_path_back(end_node)
+        arr = []
+        current_node = end_node
+        until current_node.parent == nil
+            parent = current_node.parent
+            arr << current_node
+            current_node = parent
+        end
+        [@start_pos] + arr.map { |node| node.value }.reverse
+    end
+   
 
     def new_move_positions(pos)
-        # puts KnightPathFinder.valid_moves(pos) 
-        KnightPathFinder.valid_moves(pos) - @considered_positions
+        new_moves = KnightPathFinder.valid_moves(pos) - @considered_positions
+        @considered_positions += new_moves
+        new_moves
     end 
 end
 
-# knight = KnightPathFinder.new([0,0])
+knight = KnightPathFinder.new([0,0])
+knight.build_move_tree
+knight.find_path([3,4])
+
